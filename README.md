@@ -615,10 +615,6 @@ This project is released under the MIT License.
 - **Solidity Documentation**: https://docs.soliditylang.org/
 - **Remix IDE**: https://remix.ethereum.org/
 
-## Contributing
-
-Contributions are welcome! Please ensure all security patterns are maintained and new features include comprehensive tests.
-
 ## Security Notice
 
 This is an educational project. Before deploying to mainnet:
