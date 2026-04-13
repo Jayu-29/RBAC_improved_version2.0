@@ -66,4 +66,25 @@ contract DoctorContract {
     function archiveRecord(uint256 _recordId) external onlyDoctor {
         i_storageContract.archiveRecord(_recordId);
     }
+
+    // =============================================================================================
+    // View & Pure Functions
+    // =============================================================================================
+    function getPatientRecords(address _patient)
+        external
+        view
+        onlyDoctor
+        returns (MedicalRecordStorage.MedicalRecord[] memory)
+    {
+        return i_storageContract.getMedicalRecords(_patient);
+    }
+
+    function getSingleRecord(uint256 _recordId)
+        external
+        view
+        onlyDoctor
+        returns (MedicalRecordStorage.MedicalRecord memory)
+    {
+        return i_storageContract.getMedicalRecord(_recordId);
+    }
 }
