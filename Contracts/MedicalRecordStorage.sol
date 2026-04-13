@@ -2,11 +2,9 @@
 pragma solidity ^0.8.18;
 
 import "./RBAC.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract MedicalRecordStorage is ReentrancyGuard {
-    using Counters for Counters.Counter;
 
     // =============================================================================================
     // Errors
@@ -34,9 +32,9 @@ contract MedicalRecordStorage is ReentrancyGuard {
     // State Variables
     // =============================================================================================
     RBAC public immutable i_rbac;
-    address public s_authorizedContractAddress; // Stores the DoctorContract address
+    mapping(address => bool) public authorizedContracts;
 
-    Counters.Counter private s_recordIds;
+    uint256 private s_recordIds;
     mapping(address => uint256[]) private s_patientRecordIds;
     mapping(uint256 => MedicalRecord) private s_records;
 
@@ -51,12 +49,14 @@ contract MedicalRecordStorage is ReentrancyGuard {
     );
     event RecordUpdated(uint256 indexed recordId, address indexed doctor, uint256 timestamp);
     event RecordArchived(uint256 indexed recordId, address indexed archivedBy, uint256 timestamp);
+    event ContractAuthorized(address indexed contractAddress);
+    event ContractDeauthorized(address indexed contractAddress);
 
     // =============================================================================================
     // Modifiers
     // =============================================================================================
     modifier onlyAuthorized() {
-        if (msg.sender != s_authorizedContractAddress && !i_rbac.checkUserRole(msg.sender, i_rbac.ADMIN_ROLE())) {
+        if (!authorizedContracts[msg.sender] && !i_rbac.checkUserRole(msg.sender, i_rbac.ADMIN_ROLE())) {
             revert MedicalRecordStorage__Unauthorized();
         }
         _;
@@ -74,7 +74,8 @@ contract MedicalRecordStorage is ReentrancyGuard {
         if (!i_rbac.checkUserRole(msg.sender, i_rbac.ADMIN_ROLE())) {
             revert MedicalRecordStorage__Unauthorized();
         }
-        s_authorizedContractAddress = _contractAddress;
+        authorizedContracts[_contractAddress] = true;
+        emit ContractAuthorized(_contractAddress);
     }
 
     // =============================================================================================
@@ -90,8 +91,8 @@ contract MedicalRecordStorage is ReentrancyGuard {
             revert MedicalRecordStorage__InvalidPatient();
         }
 
-        s_recordIds.increment();
-        uint256 newRecordId = s_recordIds.current();
+        s_recordIds++;
+        uint256 newRecordId = s_recordIds;
         s_records[newRecordId] = MedicalRecord(
             newRecordId,
             _doctor,
@@ -134,6 +135,7 @@ contract MedicalRecordStorage is ReentrancyGuard {
     function getMedicalRecords(address _patient)
         external
         view
+        onlyAuthorized
         returns (MedicalRecord[] memory)
     {
         uint256[] memory ids = s_patientRecordIds[_patient];
@@ -147,6 +149,7 @@ contract MedicalRecordStorage is ReentrancyGuard {
     function getMedicalRecord(uint256 _recordId)
         external
         view
+        onlyAuthorized
         returns (MedicalRecord memory)
     {
         if (s_records[_recordId].id != _recordId) revert MedicalRecordStorage__RecordDoesNotExist();
