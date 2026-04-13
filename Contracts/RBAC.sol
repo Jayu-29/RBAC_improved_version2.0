@@ -39,6 +39,7 @@ contract RBAC is AccessControl {
     // Events
     // =============================================================================================
     event UserAdded(address indexed user, bytes32 indexed role, uint256 timestamp);
+    event UserUpdated(address indexed user, bytes32 indexed newRole, uint256 timestamp);
     event UserStatusChanged(address indexed user, bool isActive, uint256 timestamp);
     event RoleRevoked(address indexed user, bytes32 indexed role, uint256 timestamp);
 
@@ -73,11 +74,15 @@ contract RBAC is AccessControl {
         _grantRole(_role, _user);
         if (s_users[_user].userAddress == address(0)) {
             s_allUsers.push(_user);
+            s_users[_user] = User(_user, _role, block.timestamp, true);
+            emit UserAdded(_user, _role, block.timestamp);
+        } else {
+            s_users[_user].role = _role;
+            s_users[_user].isActive = true;
+            emit UserUpdated(_user, _role, block.timestamp);
         }
-        s_users[_user] = User(_user, _role, block.timestamp, true);
-
-        emit UserAdded(_user, _role, block.timestamp);
     }
+
 
     function revokeUserRole(address _user, bytes32 _role) external onlyRole(ADMIN_ROLE) {
         if (!hasRole(_role, _user)) revert RBAC__UserDoesNotHaveRole();
