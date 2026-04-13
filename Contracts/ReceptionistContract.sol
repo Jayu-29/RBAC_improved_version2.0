@@ -2,10 +2,8 @@
 pragma solidity ^0.8.18;
 
 import "./RBAC.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract ReceptionistContract {
-    using Counters for Counters.Counter;
 
     // =============================================================================================
     // Errors
@@ -38,7 +36,7 @@ contract ReceptionistContract {
     // =============================================================================================
     RBAC public immutable i_rbac;
 
-    Counters.Counter private s_appointmentIds;
+    uint256 private s_appointmentIds;
     mapping(uint256 => Appointment) public s_appointments;
     mapping(address => uint256[]) private s_patientAppointments;
     mapping(address => uint256[]) private s_doctorAppointments;
@@ -97,8 +95,8 @@ contract ReceptionistContract {
             revert ReceptionistContract__InvalidDoctor();
         }
 
-        s_appointmentIds.increment();
-        uint256 newAppointmentId = s_appointmentIds.current();
+        s_appointmentIds++;
+        uint256 newAppointmentId = s_appointmentIds;
         s_appointments[newAppointmentId] = Appointment(
             newAppointmentId,
             _patient,
@@ -137,9 +135,16 @@ contract ReceptionistContract {
             revert ReceptionistContract__AlreadyCanceled();
         }
 
-        bool isPatient = appointment.patient == msg.sender;
-        bool isDoctor = appointment.doctor == msg.sender;
+        bool isPatient = (
+            appointment.patient == msg.sender &&
+            i_rbac.checkUserRole(msg.sender, i_rbac.PATIENT_ROLE())
+        );
+        bool isDoctor = (
+            appointment.doctor == msg.sender &&
+            i_rbac.checkUserRole(msg.sender, i_rbac.DOCTOR_ROLE())
+        );
         bool isReceptionist = i_rbac.checkUserRole(msg.sender, i_rbac.RECEPTIONIST_ROLE());
+
         if (!isPatient && !isDoctor && !isReceptionist) {
             revert ReceptionistContract__Unauthorized();
         }
@@ -156,12 +161,17 @@ contract ReceptionistContract {
         view
         returns (uint256[] memory)
     {
-        bool isPatient = _patient == msg.sender;
-        bool isDoctor = i_rbac.checkUserRole(msg.sender, i_rbac.DOCTOR_ROLE());
+        bool isPatient = (
+            _patient == msg.sender &&
+            i_rbac.checkUserRole(msg.sender, i_rbac.PATIENT_ROLE())
+        );
+        bool isDoctor      = i_rbac.checkUserRole(msg.sender, i_rbac.DOCTOR_ROLE());
         bool isReceptionist = i_rbac.checkUserRole(msg.sender, i_rbac.RECEPTIONIST_ROLE());
+
         if (!isPatient && !isDoctor && !isReceptionist) {
             revert ReceptionistContract__Unauthorized();
         }
+
         return s_patientAppointments[_patient];
     }
 
@@ -170,8 +180,12 @@ contract ReceptionistContract {
         view
         returns (uint256[] memory)
     {
-        bool isDoctor = _doctor == msg.sender;
+        bool isDoctor = (
+            _doctor == msg.sender &&
+            i_rbac.checkUserRole(msg.sender, i_rbac.DOCTOR_ROLE())
+        );
         bool isReceptionist = i_rbac.checkUserRole(msg.sender, i_rbac.RECEPTIONIST_ROLE());
+
         if (!isDoctor && !isReceptionist) revert ReceptionistContract__Unauthorized();
         return s_doctorAppointments[_doctor];
     }
@@ -184,12 +198,20 @@ contract ReceptionistContract {
         Appointment memory appointment = s_appointments[_appointmentId];
         if (appointment.id != _appointmentId) revert ReceptionistContract__AppointmentDoesNotExist();
 
-        bool isPatient = appointment.patient == msg.sender;
-        bool isDoctor = appointment.doctor == msg.sender;
+        bool isPatient = (
+            appointment.patient == msg.sender &&
+            i_rbac.checkUserRole(msg.sender, i_rbac.PATIENT_ROLE())
+        );
+        bool isDoctor = (
+            appointment.doctor == msg.sender &&
+            i_rbac.checkUserRole(msg.sender, i_rbac.DOCTOR_ROLE())
+        );
         bool isReceptionist = i_rbac.checkUserRole(msg.sender, i_rbac.RECEPTIONIST_ROLE());
+
         if (!isPatient && !isDoctor && !isReceptionist) {
             revert ReceptionistContract__Unauthorized();
         }
+
         return appointment;
     }
 }
