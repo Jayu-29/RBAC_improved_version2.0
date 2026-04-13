@@ -5,9 +5,11 @@ import "./RBAC.sol";
 import "./PatientContract.sol";
 
 contract PharmacistContract {
+
     // =============================================================================================
     // Errors
     // =============================================================================================
+
     error PharmacistContract__InvalidRBACAddress();
     error PharmacistContract__InvalidPatientContractAddress();
     error PharmacistContract__Unauthorized();
@@ -19,6 +21,7 @@ contract PharmacistContract {
     // =============================================================================================
     // Type Declarations
     // =============================================================================================
+
     struct Medication {
         string name;
         string dosage;
@@ -30,19 +33,23 @@ contract PharmacistContract {
     // =============================================================================================
     // State Variables
     // =============================================================================================
+
     RBAC public immutable i_rbac;
     PatientContract public immutable i_patientContract;
+
     mapping(address => Medication[]) private s_patientMedications;
 
     // =============================================================================================
     // Events
     // =============================================================================================
+
     event MedicineDispensed(
         address indexed pharmacist,
         address indexed patient,
         string medicine,
         uint256 timestamp
     );
+
     event PrescriptionFilled(
         address indexed pharmacist,
         address indexed patient,
@@ -52,6 +59,7 @@ contract PharmacistContract {
     // =============================================================================================
     // Modifiers
     // =============================================================================================
+
     modifier onlyPharmacist() {
         if (!i_rbac.checkUserRole(msg.sender, i_rbac.PHARMACIST_ROLE())) {
             revert PharmacistContract__Unauthorized();
@@ -62,10 +70,10 @@ contract PharmacistContract {
     // =============================================================================================
     // Constructor
     // =============================================================================================
+
     constructor(address _rbac, address _patientContract) {
         if (_rbac == address(0)) revert PharmacistContract__InvalidRBACAddress();
-        if (_patientContract == address(0))
-            revert PharmacistContract__InvalidPatientContractAddress();
+        if (_patientContract == address(0)) revert PharmacistContract__InvalidPatientContractAddress();
         i_rbac = RBAC(_rbac);
         i_patientContract = PatientContract(_patientContract);
     }
@@ -73,6 +81,7 @@ contract PharmacistContract {
     // =============================================================================================
     // External Functions
     // =============================================================================================
+
     function dispenseMedicine(
         address _patient,
         string calldata _medicine,
@@ -117,6 +126,7 @@ contract PharmacistContract {
     // =============================================================================================
     // View & Pure Functions
     // =============================================================================================
+
     function getPatientMedications(address _patient)
         external
         view
