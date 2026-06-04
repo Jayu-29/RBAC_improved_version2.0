@@ -1,4 +1,4 @@
-# Blockchain-Based Healthcare Management System with Hybrid RBAC
+# Secure And Dynamic Role Based Acess Control Mechanism Using Blockchain
 
 A secure, decentralized healthcare management system built on Ethereum blockchain, featuring a novel Hybrid Role-Based Access Control (RBAC) model and multi-contract architecture for managing sensitive medical records with granular permission control.
 
